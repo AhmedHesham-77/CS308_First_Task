@@ -142,6 +142,7 @@ public class HrApp {
         dblocations.update(Loc);
     }
 
+
     public static void delete_Loc(Integer Loc_id){
         dblocations.delete(Loc_id);
     }
