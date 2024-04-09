@@ -2,6 +2,7 @@ package com.sci.dao;
 
 import com.sci.criteria.FilterQuery;
 import com.sci.criteria.Operator;
+import com.sci.models.COUNTRIES;
 import com.sci.models.Employee;
 
 import java.util.ArrayList;
@@ -11,19 +12,28 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import com.sci.models.Jobs;
+import com.sci.models.Regions;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
-public class DBEmployee {
+public class DBRegions {
+    public List<Regions> get() {
+        try (Session session = DBConfig.SESSION_FACTORY.openSession()) {
+            return session.createQuery("FROM Regions").list();
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
+        }
+        return null;
+    }
 
-    public List<Employee> get() {
+
+    public Regions get(Integer Region_id) {
 
         try (Session session = DBConfig.SESSION_FACTORY.openSession()) {
 
-            return session.createQuery("FROM Employee").list();
-
-//      return session.createSQLQuery("select * from hr.employees").addEntity(Employee.class).list();
+            return session.get(Regions.class, Region_id);
 
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
@@ -32,30 +42,16 @@ public class DBEmployee {
         return null;
     }
 
-    public Employee get(Integer employeeId) {
-
-        try (Session session = DBConfig.SESSION_FACTORY.openSession()) {
-
-            return session.get(Employee.class, employeeId);
-
-        } catch (Exception ex) {
-            System.err.println(ex.getMessage());
-        }
-
-        return null;
-    }
-
-
-    public Integer insert(Employee employee) {
+    public Integer insert(Regions new_region) {
 
         Transaction transaction = null;
-        int employeeId = 0;
+        Integer RegionId = null;
 
         try (Session session = DBConfig.SESSION_FACTORY.openSession()) {
 
             transaction = session.beginTransaction();
 
-            employeeId = (Integer) session.save(employee);
+            RegionId = (Integer) session.save(new_region);
 
             transaction.commit();
 
@@ -66,10 +62,10 @@ public class DBEmployee {
             System.err.println(ex.getMessage());
         }
 
-        return employeeId;
+        return RegionId;
     }
 
-    public void update(Employee employee) {
+    public void update(Regions curr_region) {
 
         Transaction transaction = null;
 
@@ -77,7 +73,7 @@ public class DBEmployee {
 
             transaction = session.beginTransaction();
 
-            session.update(employee);
+            session.update(curr_region);
 
             transaction.commit();
 
@@ -89,7 +85,7 @@ public class DBEmployee {
         }
     }
 
-    public void delete(Integer employeeId) {
+    public void delete(Integer RegionId) {
 
         Transaction transaction = null;
 
@@ -97,9 +93,9 @@ public class DBEmployee {
 
             transaction = session.beginTransaction();
 
-            Employee employee = get(employeeId);
+            Regions del_region = get(RegionId);
 
-            session.delete(employee);
+            session.delete(del_region);
 
             transaction.commit();
 
@@ -110,34 +106,4 @@ public class DBEmployee {
             System.err.println(ex.getMessage());
         }
     }
-
-    public List<Employee> getByFilter(List<FilterQuery> filterQueries) {
-
-        try (Session session = DBConfig.SESSION_FACTORY.openSession()) {
-
-            CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<Employee> cr = cb.createQuery(Employee.class);
-            Root<Employee> root = cr.from(Employee.class);
-            Predicate[] predicates = new Predicate[filterQueries.size()];
-            for (int i = 0; i < filterQueries.size(); i++) {
-                if (filterQueries.get(i).getOp() == Operator.EQ) {
-                    predicates[i] = cb.equal(root.get(filterQueries.get(i).getAttributeName()),
-                            filterQueries.get(i).getAttributeValue());
-                } else if (filterQueries.get(i).getOp() == Operator.GT) {
-                    predicates[i] = cb.gt(root.get(filterQueries.get(i).getAttributeName()),
-                            (Integer) filterQueries.get(i).getAttributeValue());
-                }
-            }
-            cr.select(root).where(predicates);
-
-            Query<Employee> query = session.createQuery(cr);
-            return query.getResultList();
-
-        } catch (Exception ex) {
-            System.err.println(ex.getMessage());
-        }
-
-        return new ArrayList<>();
-    }
-
 }

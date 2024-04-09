@@ -2,6 +2,7 @@ package com.sci.dao;
 
 import com.sci.criteria.FilterQuery;
 import com.sci.criteria.Operator;
+import com.sci.models.COUNTRIES;
 import com.sci.models.Employee;
 
 import java.util.ArrayList;
@@ -11,19 +12,27 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import com.sci.models.Jobs;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
-public class DBEmployee {
+public class DBJOBS {
+    public List<Jobs> get() {
+        try (Session session = DBConfig.SESSION_FACTORY.openSession()) {
+            return session.createQuery("FROM Jobs").list();
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
+        }
+        return null;
+    }
 
-    public List<Employee> get() {
+
+    public Jobs get(String job_id) {
 
         try (Session session = DBConfig.SESSION_FACTORY.openSession()) {
 
-            return session.createQuery("FROM Employee").list();
-
-//      return session.createSQLQuery("select * from hr.employees").addEntity(Employee.class).list();
+            return session.get(Jobs.class, job_id);
 
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
@@ -32,30 +41,16 @@ public class DBEmployee {
         return null;
     }
 
-    public Employee get(Integer employeeId) {
-
-        try (Session session = DBConfig.SESSION_FACTORY.openSession()) {
-
-            return session.get(Employee.class, employeeId);
-
-        } catch (Exception ex) {
-            System.err.println(ex.getMessage());
-        }
-
-        return null;
-    }
-
-
-    public Integer insert(Employee employee) {
+    public String insert(Jobs new_job) {
 
         Transaction transaction = null;
-        int employeeId = 0;
+        String JobId = null;
 
         try (Session session = DBConfig.SESSION_FACTORY.openSession()) {
 
             transaction = session.beginTransaction();
 
-            employeeId = (Integer) session.save(employee);
+            JobId = (String) session.save(new_job);
 
             transaction.commit();
 
@@ -66,10 +61,10 @@ public class DBEmployee {
             System.err.println(ex.getMessage());
         }
 
-        return employeeId;
+        return JobId;
     }
 
-    public void update(Employee employee) {
+    public void update(Jobs curr_job) {
 
         Transaction transaction = null;
 
@@ -77,7 +72,7 @@ public class DBEmployee {
 
             transaction = session.beginTransaction();
 
-            session.update(employee);
+            session.update(curr_job);
 
             transaction.commit();
 
@@ -89,7 +84,7 @@ public class DBEmployee {
         }
     }
 
-    public void delete(Integer employeeId) {
+    public void delete(String JobId) {
 
         Transaction transaction = null;
 
@@ -97,9 +92,9 @@ public class DBEmployee {
 
             transaction = session.beginTransaction();
 
-            Employee employee = get(employeeId);
+            Jobs del_job = get(JobId);
 
-            session.delete(employee);
+            session.delete(del_job);
 
             transaction.commit();
 
@@ -110,34 +105,4 @@ public class DBEmployee {
             System.err.println(ex.getMessage());
         }
     }
-
-    public List<Employee> getByFilter(List<FilterQuery> filterQueries) {
-
-        try (Session session = DBConfig.SESSION_FACTORY.openSession()) {
-
-            CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<Employee> cr = cb.createQuery(Employee.class);
-            Root<Employee> root = cr.from(Employee.class);
-            Predicate[] predicates = new Predicate[filterQueries.size()];
-            for (int i = 0; i < filterQueries.size(); i++) {
-                if (filterQueries.get(i).getOp() == Operator.EQ) {
-                    predicates[i] = cb.equal(root.get(filterQueries.get(i).getAttributeName()),
-                            filterQueries.get(i).getAttributeValue());
-                } else if (filterQueries.get(i).getOp() == Operator.GT) {
-                    predicates[i] = cb.gt(root.get(filterQueries.get(i).getAttributeName()),
-                            (Integer) filterQueries.get(i).getAttributeValue());
-                }
-            }
-            cr.select(root).where(predicates);
-
-            Query<Employee> query = session.createQuery(cr);
-            return query.getResultList();
-
-        } catch (Exception ex) {
-            System.err.println(ex.getMessage());
-        }
-
-        return new ArrayList<>();
-    }
-
 }
